@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Staff Application Rejected</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #fff;
+      max-width: 600px;
+      margin: 0 auto;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #d9534f;
+    }
+    .reason {
+      background-color: #f8d7da;
+      padding: 15px;
+      border-left: 4px solid #dc3545;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-style: italic;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Staff Application Rejected</h2>
+    <p>Dear Applicant,</p>
+    <p>We regret to inform you that your application to join as a staff member has been <strong>rejected</strong>.</p>
+
+    <div class="reason">
+      <strong>Reason:</strong> {{Reason}}
+    </div>
+
+    <p>If you have any questions or would like to inquire further, please feel free to contact the administration team.</p>
+
+    <p class="footer">
+      Thank you,<br />
+      The Admin Team
+    </p>
+  </div>
+</body>
+</html>
