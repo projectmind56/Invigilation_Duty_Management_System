@@ -68,7 +68,7 @@ function Admin() {
                         to="/admin/add"
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
-                        Add Staff
+                        Add Time Table
                     </NavLink>
                 </li>
             </ul>
