@@ -11,6 +11,7 @@ function AddStaff() {
         department: '',
         branch: '',
         year: '',
+        examDate: ''
     });
 
     const [dataList, setDataList] = useState([
@@ -21,7 +22,8 @@ function AddStaff() {
             subjectName: 'Intro to CS',
             department: 'Computer Science',
             branch: 'Software Engineering',
-            year: 1
+            year: 1,
+            examDate: '2025-11-01'
         },
         {
             session: 'Afternoon',
@@ -30,7 +32,8 @@ function AddStaff() {
             subjectName: 'Data Structures',
             department: 'Computer Science',
             branch: 'Information Tech',
-            year: 2
+            year: 2,
+            examDate: '2025-11-03'
         },
         {
             session: 'Forenoon',
@@ -39,7 +42,8 @@ function AddStaff() {
             subjectName: 'Circuit Analysis',
             department: 'Electrical',
             branch: 'Power Systems',
-            year: 2
+            year: 2,
+            examDate: '2025-11-05'
         },
         {
             session: 'Afternoon',
@@ -48,7 +52,8 @@ function AddStaff() {
             subjectName: 'Thermodynamics',
             department: 'Mechanical',
             branch: 'Manufacturing',
-            year: 3
+            year: 3,
+            examDate: '2025-11-07'
         },
         {
             session: 'Forenoon',
@@ -57,7 +62,8 @@ function AddStaff() {
             subjectName: 'Structural Engineering',
             department: 'Civil',
             branch: 'Construction',
-            year: 4
+            year: 4,
+            examDate: '2025-11-09'
         },
     ]);
 
@@ -77,14 +83,20 @@ function AddStaff() {
             department: '',
             branch: '',
             year: '',
+            examDate: ''
         });
         setShowPopup(false);
+    };
+
+    const handleDelete = (indexToDelete) => {
+        const updatedList = dataList.filter((_, index) => index !== indexToDelete);
+        setDataList(updatedList);
     };
 
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="text-primary">Staff Timetable Entries</h4>
+                <h4 className="text-primary">Exam Timetable Entries</h4>
                 <button className="btn btn-primary" onClick={() => setShowPopup(true)}>Add</button>
             </div>
 
@@ -101,6 +113,8 @@ function AddStaff() {
                             <th>Department</th>
                             <th>Branch</th>
                             <th>Year</th>
+                            <th>Exam Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,6 +128,12 @@ function AddStaff() {
                                 <td>{data.department}</td>
                                 <td>{data.branch}</td>
                                 <td>{data.year}</td>
+                                <td>{data.examDate}</td>
+                                <td>
+                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(index)}>
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -160,9 +180,14 @@ function AddStaff() {
                                 <input type="text" className="form-control" name="branch" value={formData.branch} onChange={handleInputChange} required />
                             </div>
 
-                            <div className="mb-3">
+                            <div className="mb-2">
                                 <label className="form-label">Year</label>
                                 <input type="number" className="form-control" name="year" value={formData.year} onChange={handleInputChange} required />
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="form-label">Exam Date</label>
+                                <input type="date" className="form-control" name="examDate" value={formData.examDate} onChange={handleInputChange} required />
                             </div>
 
                             <div className="d-flex justify-content-between">
