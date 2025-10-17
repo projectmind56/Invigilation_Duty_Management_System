@@ -11,5 +11,7 @@ namespace backend.Context
 
         }
         public DbSet<StaffModel> StaffModel { get; set; }
+        public DbSet<ExamTimeTableModel> ExamTimeTable { get; set; }
+
     }
 }

@@ -57,7 +57,7 @@ function Admin() {
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                     <NavLink
-                        to="/admin/accept"
+                        to="/admin/accept-staff"
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
                         Accept Staff
@@ -65,7 +65,7 @@ function Admin() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        to="/admin/add"
+                        to="/admin/add-time-table"
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
                         Add Time Table

@@ -48,6 +48,68 @@ namespace backend.Services
             return true;
         }
 
+        public async Task<bool> AddExamTimeTableAsync(ExamTimeTableDto dto)
+        {
+            // Check if subject code already exists
+            var exists = await _context.ExamTimeTable
+                .AnyAsync(e => e.SubjectCode == dto.SubjectCode);
+
+            if (exists)
+            {
+                throw new InvalidOperationException("An entry with this subject code already exists.");
+            }
+
+            var newEntry = new ExamTimeTableModel
+            {
+                Session = dto.Session,
+                Semester = dto.Semester,
+                SubjectCode = dto.SubjectCode,
+                SubjectName = dto.SubjectName,
+                DepartmentName = dto.DepartmentName,
+                BranchName = dto.BranchName,
+                Year = dto.Year,
+                ExamDate = dto.ExamDate,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _context.ExamTimeTable.Add(newEntry);
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
+        }
+
+
+        public async Task<List<ExamTimeTableModel>> GetAllExamTimeTablesAsync()
+        {
+            return await _context.ExamTimeTable.ToListAsync();
+        }
+
+        public async Task<bool> DeleteExamTimeTableAsync(int id)
+        {
+            var entry = await _context.ExamTimeTable.FindAsync(id);
+            if (entry == null) return false;
+
+            _context.ExamTimeTable.Remove(entry);
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
+        }
+
+        public async Task UpdateExamTimeTableAsync(int id, ExamTimeTableModel model)
+        {
+            var existing = await _context.ExamTimeTable.FindAsync(id);
+            if (existing == null) throw new Exception("Record not found");
+
+            existing.Session = model.Session;
+            existing.Semester = model.Semester;
+            existing.SubjectCode = model.SubjectCode;
+            existing.SubjectName = model.SubjectName;
+            existing.DepartmentName = model.DepartmentName;
+            existing.BranchName = model.BranchName;
+            existing.Year = model.Year;
+            existing.ExamDate = model.ExamDate;
+
+            await _context.SaveChangesAsync();
+        }
+
         private string GenerateRandomPassword(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

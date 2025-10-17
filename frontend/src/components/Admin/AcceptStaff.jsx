@@ -7,6 +7,7 @@ function AcceptStaff() {
     const [searchTerm, setSearchTerm] = useState('');
     const [rejectionInputs, setRejectionInputs] = useState({});
     const [loadingStaffId, setLoadingStaffId] = useState(null);
+    const [loadingActionType, setLoadingActionType] = useState(null); // 'accept' or 'reject'
 
     useEffect(() => {
         fetchStaff();
@@ -24,9 +25,11 @@ function AcceptStaff() {
 
     const handleApprovalChange = async (staffId, value) => {
         if (value === 'Reject') {
+            // Start rejection input mode, no loading here yet
             setRejectionInputs((prev) => ({ ...prev, [staffId]: '' }));
         } else if (value === 'Accept') {
             setLoadingStaffId(staffId);
+            setLoadingActionType('accept');
             try {
                 const response = await fetch('http://localhost:5277/api/Admin/approve', {
                     method: 'POST',
@@ -55,6 +58,7 @@ function AcceptStaff() {
                 toast.error('Error approving staff.');
             } finally {
                 setLoadingStaffId(null);
+                setLoadingActionType(null);
             }
         }
     };
@@ -67,6 +71,7 @@ function AcceptStaff() {
         }
 
         setLoadingStaffId(staffId);
+        setLoadingActionType('reject');
         try {
             const response = await fetch('http://localhost:5277/api/Admin/approve', {
                 method: 'POST',
@@ -86,10 +91,10 @@ function AcceptStaff() {
                     prevList.map((staff) =>
                         staff.staffId === staffId
                             ? {
-                                  ...staff,
-                                  approvalStatus: 'Reject',
-                                  rejectionReason: reason,
-                              }
+                                ...staff,
+                                approvalStatus: 'Reject',
+                                rejectionReason: reason,
+                            }
                             : staff
                     )
                 );
@@ -105,6 +110,7 @@ function AcceptStaff() {
             toast.error('Error rejecting staff.');
         } finally {
             setLoadingStaffId(null);
+            setLoadingActionType(null);
         }
     };
 
@@ -118,14 +124,6 @@ function AcceptStaff() {
             delete updated[staffId];
             return updated;
         });
-    };
-
-    const handleDeleteStaff = (staffId) => {
-        const confirmDelete = window.confirm('Are you sure you want to delete this staff member?');
-        if (!confirmDelete) return;
-
-        setStaffList((prevList) => prevList.filter((staff) => staff.staffId !== staffId));
-        toast.info('Staff removed from UI.');
     };
 
     const filteredStaff = staffList.filter((staff) =>
@@ -155,17 +153,21 @@ function AcceptStaff() {
                     </button>
                 </div>
             </div>
-
-            <div className="table-responsive">
-                <table className="table table-bordered table-hover table-sm align-middle small">
-                    <thead className="table-light">
+            <div
+                className="table-responsive"
+                style={{ maxHeight: '60vh', overflowY: 'auto' }}
+            >
+                <table className="table table-bordered table-hover table-sm align-middle small mb-0">
+                    <thead
+                        className="table-light"
+                        style={{ position: 'sticky', top: 0, zIndex: 1 }}
+                    >
                         <tr>
                             <th>#</th>
                             <th>Email</th>
                             <th>Department</th>
                             <th>Role</th>
                             <th>Approval Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -212,15 +214,16 @@ function AcceptStaff() {
                                                                 e.target.value
                                                             )
                                                         }
+                                                        disabled={loadingStaffId === staff.staffId && loadingActionType === 'reject'}
                                                     />
                                                     <button
                                                         className="btn btn-sm btn-danger"
                                                         onClick={() =>
                                                             handleSubmitRejection(staff.staffId)
                                                         }
-                                                        disabled={loadingStaffId === staff.staffId}
+                                                        disabled={loadingStaffId === staff.staffId && loadingActionType === 'reject'}
                                                     >
-                                                        {loadingStaffId === staff.staffId ? (
+                                                        {loadingStaffId === staff.staffId && loadingActionType === 'reject' ? (
                                                             <span
                                                                 className="spinner-border spinner-border-sm"
                                                                 role="status"
@@ -235,36 +238,48 @@ function AcceptStaff() {
                                                         onClick={() =>
                                                             handleCancelRejection(staff.staffId)
                                                         }
+                                                        disabled={loadingStaffId === staff.staffId && loadingActionType === 'reject'}
                                                     >
                                                         Cancel
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <select
-                                                    className="form-select form-select-sm"
-                                                    defaultValue={staff.approvalStatus || ''}
-                                                    onChange={(e) =>
-                                                        handleApprovalChange(
-                                                            staff.staffId,
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                >
-                                                    <option value="">
-                                                        {staff.approvalStatus || 'Select'}
-                                                    </option>
-                                                    <option value="Accept">Accept</option>
-                                                    <option value="Reject">Reject</option>
-                                                </select>
+                                                <div style={{ position: 'relative' }}>
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        defaultValue={staff.approvalStatus || ''}
+                                                        onChange={(e) =>
+                                                            handleApprovalChange(
+                                                                staff.staffId,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        disabled={loadingStaffId === staff.staffId && loadingActionType === 'accept'}
+                                                    >
+                                                        <option value="">
+                                                            {staff.approvalStatus || 'Select'}
+                                                        </option>
+                                                        <option value="Accept">Accept</option>
+                                                        <option value="Reject">Reject</option>
+                                                    </select>
+                                                    {loadingStaffId === staff.staffId && loadingActionType === 'accept' && (
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '50%',
+                                                                right: '10px',
+                                                                transform: 'translateY(-50%)',
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className="spinner-border spinner-border-sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                            ></span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
-                                        </td>
-                                        <td>
-                                            <button
-                                                className="btn btn-sm btn-danger"
-                                                onClick={() => handleDeleteStaff(staff.staffId)}
-                                            >
-                                                Delete
-                                            </button>
                                         </td>
                                     </tr>
                                 );

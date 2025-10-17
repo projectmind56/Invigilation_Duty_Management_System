@@ -6,10 +6,10 @@ import Login from './components/Authentication/Login';
 import Register from './components/Authentication/Register';
 import Admin from './components/Admin/Admin';
 import AcceptStaff from './components/Admin/AcceptStaff';
-import AddStaff from './components/Admin/AddStaff';
+import AddStaff from './components/Admin/AddExamTimeTable';
+import AddExamTimeTable from './components/Admin/AddExamTimeTable';
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
@@ -24,8 +24,8 @@ function App() {
           {/* admin side routes */}
           <Route path="/admin/*" element={<Admin />}>
             <Route index element={<AcceptStaff />} />
-            <Route path="accept" element={<AcceptStaff />} />
-            <Route path="add" element={<AddStaff />} />
+            <Route path="accept-staff" element={<AcceptStaff />} />
+            <Route path="add-time-table" element={<AddExamTimeTable />} />
           </Route>
 
         </Routes>
