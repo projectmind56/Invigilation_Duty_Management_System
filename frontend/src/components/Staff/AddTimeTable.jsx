@@ -11,7 +11,26 @@ function AddTimeTable() {
   const [editMode, setEditMode] = useState(false); // 👈 Track if we are editing
   const [editEntryId, setEditEntryId] = useState(null); // 👈 ID for editing
 
-  const staffId = localStorage.getItem("staffId") || 1;
+  const token = localStorage.getItem("token");
+
+  let staffId = null;
+
+  if (token) {
+    try {
+      // JWT has three parts: header.payload.signature
+      const payloadBase64 = token.split('.')[1];
+      const payloadJson = atob(payloadBase64); // decode from Base64
+      const payload = JSON.parse(payloadJson);
+
+      // Use the "nameid" claim as staffId
+      staffId = payload.nameid;
+    } catch (error) {
+      console.error("Failed to parse JWT token:", error);
+    }
+  }
+
+  // Optional fallback if token is missing or invalid
+  staffId = staffId;
   const API_BASE = "http://localhost:5277/api/Staff";
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -60,50 +79,50 @@ function AddTimeTable() {
   };
 
   // 🧩 Handle Save (both Add & Edit)
-// 🧩 Handle Save (both Add & Edit)
-const handleSubmit = async () => {
-  if (!subjectName.trim()) {
-    toast.error("Please enter a subject name");
-    return;
-  }
-
-  const payload = {
-    id: editMode ? editEntryId : 0,
-    staffId: parseInt(staffId),
-    subjectName: subjectName, // 👈 send subjectName instead of subjectId
-    day: selectedSlot.day,
-    period: selectedSlot.period,
-  };
-
-  try {
-    let res;
-
-    if (editMode) {
-      // 🔹 Update existing
-      res = await fetch(`${API_BASE}/update-staff-time-table/${editEntryId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      // 🔸 Add new
-      res = await fetch(`${API_BASE}/create-staff-time-table`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  // 🧩 Handle Save (both Add & Edit)
+  const handleSubmit = async () => {
+    if (!subjectName.trim()) {
+      toast.error("Please enter a subject name");
+      return;
     }
 
-    if (!res.ok) throw new Error("Failed to save timetable entry");
+    const payload = {
+      id: editMode ? editEntryId : 0,
+      staffId: parseInt(staffId),
+      subjectName: subjectName, // 👈 send subjectName instead of subjectId
+      day: selectedSlot.day,
+      period: selectedSlot.period,
+    };
 
-    toast.success(editMode ? "Time table updated!" : "Time table entry added!");
-    setShowModal(false);
-    setSubjectName("");
-    fetchTimeTable();
-  } catch (err) {
-    toast.error(editMode ? "Error updating entry." : "Error creating entry.");
-  }
-};
+    try {
+      let res;
+
+      if (editMode) {
+        // 🔹 Update existing
+        res = await fetch(`${API_BASE}/update-staff-time-table/${editEntryId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // 🔸 Add new
+        res = await fetch(`${API_BASE}/create-staff-time-table`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!res.ok) throw new Error("Failed to save timetable entry");
+
+      toast.success(editMode ? "Time table updated!" : "Time table entry added!");
+      setShowModal(false);
+      setSubjectName("");
+      fetchTimeTable();
+    } catch (err) {
+      toast.error(editMode ? "Error updating entry." : "Error creating entry.");
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -128,11 +147,12 @@ const handleSubmit = async () => {
                 <td><b>{day}</b></td>
                 {periods.map((period) => {
                   const entry = timeTable[day]?.[period];
+
                   return (
                     <td key={period}>
-                      {entry ? (
+                      {entry?.subjectName ? (
                         <div>
-                          <span>{entry.subjectName || "Subject"}</span>
+                          <span>{entry?.subjectName || ""}</span>
                           <Button
                             variant="outline-primary"
                             size="sm"

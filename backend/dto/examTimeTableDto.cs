@@ -7,7 +7,7 @@ namespace backend.DTOs
     {
         [Required]
         public int StaffId { get; set; }
-        
+
         [Required]
         public string Session { get; set; } = string.Empty;
 
@@ -37,5 +37,9 @@ namespace backend.DTOs
         [Required]
         [DataType(DataType.Date)]
         public DateTime ExamDate { get; set; }
+    }
+    public class ReallocationActionDto
+    {
+        public int RequestId { get; set; } // Reallocation request ID
     }
 }

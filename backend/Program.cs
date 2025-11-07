@@ -86,7 +86,7 @@ builder.Services.AddCors(options =>
 });
 
 const string connectionString =
-    "Data Source=DHARANESH\\SQLEXPRESS;TrustServerCertificate=True;Integrated Security=True;Initial Catalog=InvigilationDutyManagementSystem;";
+    "Data Source=PTPLL512;TrustServerCertificate=True;Integrated Security=True;Initial Catalog=InvigilationDutyManagementSystem;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));

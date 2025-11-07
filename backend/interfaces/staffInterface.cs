@@ -1,5 +1,6 @@
 using backend.Dto;
 using backend.Dtos;
+using backend.DTOs;
 using backend.Models;
 using System.Threading.Tasks;
 using YourNamespace.Models;
@@ -31,5 +32,8 @@ namespace backend.Interfaces
         Task<List<ReallocationRequest>> GetAllRequestsAsync();
         Task<List<ReallocationRequest>> GetRequestsByStaffIdAsync(int staffId);
 
+        Task<List<ReallocationRequestResponseDto>> GetReallocationRequestsForStaffAsync(int toStaffId);
+    Task<bool> AcceptReallocationRequestAsync(int requestId);
+    Task<bool> RejectReallocationRequestAsync(int requestId);
     }
 }

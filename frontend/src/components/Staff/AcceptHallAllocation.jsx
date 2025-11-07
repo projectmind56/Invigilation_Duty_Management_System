@@ -33,6 +33,7 @@ function AcceptHallAllocation() {
 
     const decoded = decodeToken(token);
     const staffId = decoded?.nameid;
+    
     setCurrentStaffId(staffId);
 
     if (!staffId) {
@@ -92,7 +93,9 @@ function AcceptHallAllocation() {
       const data = await res.json();
 
       // Remove current staff from the list
-      const filtered = data.filter((s) => s.staffId !== currentStaffId);
+      
+      const filtered = data.filter((s) => s.staffId !==  Number(currentStaffId));
+      
       setAvailableStaff(filtered);
       setSelectedStaffIds([]);
       setShowStaffModal(true);
@@ -111,6 +114,7 @@ function AcceptHallAllocation() {
   };
 
   const handleRequestReallocation = async (staffId) => {
+
     if (!currentAllocation || !staffId) return;
 
     const requestBody = {
@@ -186,6 +190,7 @@ function AcceptHallAllocation() {
                 <th>Year</th>
                 <th>Status</th>
                 <th>Exam Date</th>
+                <th>Rellocation Staff Id</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -204,36 +209,41 @@ function AcceptHallAllocation() {
                   <td>
                     <span
                       className={`badge ${a.status === "accepted"
-                          ? "bg-success"
-                          : a.status === "pending"
-                            ? "bg-warning text-dark"
-                            : "bg-secondary"
+                        ? "bg-success"
+                        : a.status === "pending"
+                          ? "bg-warning text-dark"
+                          : "bg-secondary"
                         }`}
                     >
                       {a.status}
                     </span>
                   </td>
                   <td>{new Date(a.examDate).toLocaleDateString()}</td>
+                  <td>{a.reallocatedStaffId}</td>
                   <td>
                     {a.status === "pending" ? (
                       <div className="d-flex justify-content-center gap-2">
-                        <button
-                          className="btn btn-success btn-sm"
-                          onClick={() => handleAccept(a.id)}
-                        >
-                          Accept
-                        </button>
                         <button
                           className="btn btn-danger btn-sm"
                           onClick={() => handleReallocate(a)}
                         >
                           Reallocate
                         </button>
+                        {a.reallocatedStaffId == null && (
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleAccept(a.id)}
+                          >
+                            Accept
+                          </button>
+
+                        )}
                       </div>
                     ) : (
                       <span className="text-muted">—</span>
                     )}
                   </td>
+
                 </tr>
               ))}
             </tbody>
@@ -284,11 +294,11 @@ function AcceptHallAllocation() {
                           <td>
                             {staff.reallocationStatus ? (
                               <span
-                                className={`badge ${staff.reallocationStatus === "accepted"
-                                    ? "bg-success"
-                                    : staff.reallocationStatus === "pending"
-                                      ? "bg-warning text-dark"
-                                      : "bg-secondary"
+                                className={`badge ${staff.reallocationStatus === "approved"
+                                  ? "bg-success"
+                                  : staff.reallocationStatus === "pending"
+                                    ? "bg-warning text-dark"
+                                    : "bg-secondary"
                                   }`}
                               >
                                 {staff.reallocationStatus}

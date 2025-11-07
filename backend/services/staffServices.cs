@@ -11,6 +11,7 @@ using System.Security.Claims;
 using System.Text;
 using backend.Dtos;
 using YourNamespace.Models;
+using backend.DTOs;
 
 namespace backend.Services
 {
@@ -148,25 +149,26 @@ namespace backend.Services
         {
             // 1️⃣ Get all approved staff
             var allStaff = await _context.StaffModel
-                .Where(s => s.ApprovalStatus.ToLower() == "accept")
-                .ToListAsync();
+    .Where(s => s.ApprovalStatus.ToLower() == "accept" && s.Role.ToLower() != "admin")
+    .ToListAsync();
 
             // 2️⃣ Get all timetables for that day (match Day of week)
             string dayName = examDate.DayOfWeek.ToString();
             var timeTables = await _context.StaffTimeTable
-                .Where(t => t.Day == dayName)
+                .Where(t => t.Day.ToLower() == dayName.ToLower())
                 .Select(t => new
                 {
                     t.Id,
                     t.Day,
                     t.Period,
                     t.StaffId,
-                    SubjectName = t.SubjectName ?? string.Empty
+                    SubjectName = t.SubjectName ?? string.Empty // convert null to empty
                 })
                 .ToListAsync();
 
             // 3️⃣ Define which periods are occupied for each staff
             var busyMap = timeTables
+                .Where(t => !string.IsNullOrEmpty(t.SubjectName)) // only consider periods with a subject assigned
                 .GroupBy(t => t.StaffId)
                 .ToDictionary(
                     g => g.Key,
@@ -183,34 +185,35 @@ namespace backend.Services
                 .Where(r => r.AllocationId == allocationId)
                 .ToListAsync();
 
-            // 6️⃣ Filter available staff and include status
+            // 6️⃣ Filter available staff and include reallocation status
             var availableStaff = allStaff
+                .Where(staff =>
+                {
+                    if (busyMap.ContainsKey(staff.StaffId))
+                    {
+                        var busyPeriods = busyMap[staff.StaffId];
+                        bool hasConflict = requiredFreePeriods.Any(p => busyPeriods.Contains(p));
+                        if (hasConflict) return false;
+                    }
+                    return true;
+                })
                 .Select(staff =>
                 {
-                    string status = null;
-
-                    // Check if this staff has a reallocation request
                     var request = reallocationRequests.FirstOrDefault(r => r.ToStaffId == staff.StaffId);
-                    if (request != null)
-                    {
-                        status = request.Status; // pending, approved, rejected
-                    }
-
-                    // Determine if staff is free
-                    bool isFree = !busyMap.ContainsKey(staff.StaffId) || !requiredFreePeriods.Any(p => busyMap[staff.StaffId].Contains(p));
 
                     return new StaffInfoDto
                     {
                         StaffId = staff.StaffId,
                         Email = staff.Email,
                         Department = staff.Department,
-                        ReallocationStatus = status,  // include request status if exists
+                        ReallocationStatus = request?.Status
                     };
                 })
                 .ToList();
 
             return availableStaff;
         }
+
 
         public async Task<bool> ReallocateExamTimeTableAllocationAsync(int allocationId, int newStaffId)
         {
@@ -287,6 +290,94 @@ namespace backend.Services
                 .Where(e => e.StaffId == staffId)
                 .ToListAsync();
         }
+
+        public async Task<List<ReallocationRequestResponseDto>> GetReallocationRequestsForStaffAsync(int toStaffId)
+        {
+            var allowedStatuses = new List<string> { "pending", "approved", "canceled" };
+            // Get pending requests for the given staff
+            var requests = await _context.ReallocationRequests
+    .Where(r => r.ToStaffId == toStaffId && allowedStatuses.Contains(r.Status))
+    .ToListAsync();
+
+            var responseList = new List<ReallocationRequestResponseDto>();
+
+            foreach (var request in requests)
+            {
+                // Get allocation details
+                var allocation = await _context.ExamTimeTable
+                    .FirstOrDefaultAsync(e => e.Id == request.AllocationId);
+
+                // Get staff emails
+                var fromStaff = await _context.StaffModel
+                    .FirstOrDefaultAsync(s => s.StaffId == request.FromStaffId);
+
+                if (allocation != null && fromStaff != null)
+                {
+                    responseList.Add(new ReallocationRequestResponseDto
+                    {
+                        RequestId = request.Id,
+                        AllocationId = request.AllocationId,
+                        ExamId = request.ExamId,
+                        FromStaffEmail = fromStaff.Email,
+                        Session = allocation.Session,
+                        Semester = allocation.Semester,
+                        SubjectCode = allocation.SubjectCode,
+                        SubjectName = allocation.SubjectName,
+                        Department = allocation.DepartmentName,
+                        ClassName = allocation.ClassName,
+                        Branch = allocation.BranchName,
+                        Year = allocation.Year,
+                        AllocationStatus = allocation.Status,
+                        ExamDate = allocation.ExamDate,
+                        RequestStatus = request.Status,
+                        RequestDate = request.RequestDate
+                    });
+                }
+            }
+
+            return responseList;
+        }
+        public async Task<bool> AcceptReallocationRequestAsync(int requestId)
+        {
+            var request = await _context.ReallocationRequests.FirstOrDefaultAsync(r => r.Id == requestId);
+            if (request == null) return false;
+
+            // Update the ExamTimeTableModel with the new staff
+            var allocation = await _context.ExamTimeTable.FirstOrDefaultAsync(e => e.Id == request.AllocationId);
+            if (allocation == null) return false;
+
+            // 1️⃣ Update the allocation to the accepted staff
+            allocation.ReallocatedStaffId = request.ToStaffId;
+            allocation.Status = "pending"; // or "allocated" based on your logic
+
+            // 2️⃣ Mark this request as approved
+            request.Status = "approved";
+
+            // 3️⃣ Reject all other requests for the same AllocationId
+            var otherRequests = await _context.ReallocationRequests
+                .Where(r => r.AllocationId == request.AllocationId && r.Id != requestId)
+                .ToListAsync();
+
+            foreach (var r in otherRequests)
+            {
+                r.Status = "canceled";
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
+        public async Task<bool> RejectReallocationRequestAsync(int requestId)
+        {
+            var request = await _context.ReallocationRequests.FirstOrDefaultAsync(r => r.Id == requestId);
+            if (request == null) return false;
+
+            request.Status = "rejected";
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
 
 
         private async Task SendRegistrationNotificationEmailAsync(StaffModel staff)

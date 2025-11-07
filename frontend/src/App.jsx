@@ -13,6 +13,8 @@ import StaffDashboard from './components/Staff/StaffDashboard';
 import AddTimeTable from './components/Staff/AddTimeTable';
 import ExamTimeTableAllocation from './components/Admin/ExamTimeTableAllocation';
 import AcceptHallAllocation from './components/Staff/AcceptHallAllocation';
+import ProtectedRoute from './ProtectedRoute';
+import AcceptHallReAllocation from './components/Staff/AcceptHallReAllocation';
 
 // Utility: decode JWT safely
 function decodeToken(token) {
@@ -26,39 +28,37 @@ function decodeToken(token) {
 }
 
 function App() {
-  const token = localStorage.getItem('token'); // <-- where your JWT is stored
-  const decoded = token ? decodeToken(token) : null;
-  const role = decoded?.role;
-
   return (
     <Router>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
 
+        {/* Admin protected routes */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<Admin />}>
+            <Route index element={<AcceptStaff />} />
+            <Route path="accept-staff" element={<AcceptStaff />} />
+            <Route path="add-time-table" element={<AddExamTimeTable />} />
+            <Route path="allocate-time-table" element={<ExamTimeTableAllocation />} />
+          </Route>
+        </Route>
 
-        {role === 'admin' ? (
-          <>
-            <Route path="/admin/" element={<Admin />}>
-              <Route index element={<AcceptStaff />} />
-              <Route path="accept-staff" element={<AcceptStaff />} />
-              <Route path="add-time-table" element={<AddExamTimeTable />} />
-              <Route path="allocate-time-table" element={<ExamTimeTableAllocation />} />
-            </Route>
-          </>
-        ) : role === 'staff' ? (
-          <>
-            <Route path="/staff/" element={<Staff />}>
-              <Route index element={<AcceptHallAllocation />} />
-              <Route path="accept-hall-arrangement" element={<AcceptHallAllocation />} />
-              <Route path="add-time-table" element={<AddTimeTable />} />
-            </Route>
-          </>
-        ) : (
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        )}
+        {/* Staff protected routes */}
+        <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
+          <Route path="/staff" element={<Staff />}>
+            <Route index element={<AcceptHallAllocation />} />
+            <Route path="accept-hall-arrangement" element={<AcceptHallAllocation />} />
+            <Route path="accept-hall-re-arrangement" element={<AcceptHallReAllocation />} />
+            <Route path="add-time-table" element={<AddTimeTable />} />
+          </Route>
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

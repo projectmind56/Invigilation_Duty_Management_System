@@ -286,6 +286,7 @@ function ExamTimeTableAllocation() {
                             <th>Year</th>
                             <th>Exam Date</th>
                             <th>Staff ID</th>
+                            <th>ReallcocatedStaff ID</th>
                             <th>Class Number</th>
                             <th>Actions</th>
                         </tr>
@@ -308,6 +309,7 @@ function ExamTimeTableAllocation() {
                                     <td>{data.year}</td>
                                     <td>{data.examDate.split('T')[0]}</td>
                                     <td>{data.staffId}</td>
+                                    <td>{data.reallocatedStaffId}</td>
                                     <td>{data.className}</td>
                                     <td>
                                         <button className="btn btn-sm btn-warning me-1" onClick={() => handleEdit(data)}>Edit</button>

@@ -3,6 +3,7 @@ using backend.Dto;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using backend.Dtos;
+using backend.DTOs;
 
 namespace backend.Controllers
 {
@@ -116,6 +117,30 @@ namespace backend.Controllers
             else
                 return BadRequest(new { success = false, message });
         }
+
+[HttpGet("reallocationRequests/{toStaffId}")]
+        public async Task<IActionResult> GetReallocationRequests(int toStaffId)
+        {
+            var requests = await _staffInterfaces.GetReallocationRequestsForStaffAsync(toStaffId);
+            return Ok(requests);
+        }
+
+[HttpPut("reallocationRequests/accept")]
+public async Task<IActionResult> AcceptReallocation([FromBody] ReallocationActionDto dto)
+{
+    var result = await _staffInterfaces.AcceptReallocationRequestAsync(dto.RequestId);
+    if (!result) return NotFound(new { message = "Request or allocation not found." });
+    return Ok(new { message = "Reallocation request accepted." });
+}
+
+[HttpPut("reallocationRequests/reject")]
+public async Task<IActionResult> RejectReallocation([FromBody] ReallocationActionDto dto)
+{
+    var result = await _staffInterfaces.RejectReallocationRequestAsync(dto.RequestId);
+    if (!result) return NotFound(new { message = "Request not found." });
+    return Ok(new { message = "Reallocation request rejected." });
+}
+
 
 
     }
