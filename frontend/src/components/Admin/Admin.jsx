@@ -15,7 +15,7 @@ function Admin() {
 
     const handleLogout = () => {
         // Remove token from local storage
-        localStorage.removeItem('token'); // change key if different
+        localStorage.removeItem('token'); 
         // Navigate to login
         navigate('/login', { replace: true });
     };
