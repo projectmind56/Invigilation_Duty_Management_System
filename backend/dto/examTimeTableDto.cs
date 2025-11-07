@@ -6,6 +6,9 @@ namespace backend.DTOs
     public class ExamTimeTableDto
     {
         [Required]
+        public int StaffId { get; set; }
+        
+        [Required]
         public string Session { get; set; } = string.Empty;
 
         [Required]
@@ -20,6 +23,9 @@ namespace backend.DTOs
 
         [Required]
         public string DepartmentName { get; set; } = string.Empty;
+
+        [Required]
+        public string ClassName { get; set; } = string.Empty;
 
         [Required]
         public string BranchName { get; set; } = string.Empty;

@@ -26,27 +26,31 @@ namespace backend.Services
                 .ToListAsync();
         }
 
-        public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
-        {
-            var staff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == dto.StaffId);
-            if (staff == null) return false;
+public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
+{
+    var staff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == dto.StaffId);
+    if (staff == null) return false;
 
-            if (dto.Status == "Accept")
-            {
-                var password = GenerateRandomPassword(6);
-                staff.Password = password;
-                staff.ApprovalStatus = "Accept";
-                await SendAcceptanceEmailAsync(staff.Email, password);
-            }
-            else if (dto.Status == "Reject")
-            {
-                staff.ApprovalStatus = "Reject";
-                await SendRejectionEmailAsync(staff.Email, dto.RejectionReason ?? "Not specified");
-            }
+    if (dto.Status == "Accept")
+    {
+        var password = GenerateRandomPassword(6);
+        staff.Password = password;
+        staff.ApprovalStatus = "Accept";
 
-            await _context.SaveChangesAsync();
-            return true;
-        }
+        await SendAcceptanceEmailAsync(staff.Email, password);
+
+        // 🟢 CREATE BLANK TIMETABLE FOR THIS STAFF
+        await CreateDefaultTimeTableForStaffAsync(staff.StaffId);
+    }
+    else if (dto.Status == "Reject")
+    {
+        staff.ApprovalStatus = "Reject";
+        await SendRejectionEmailAsync(staff.Email, dto.RejectionReason ?? "Not specified");
+    }
+
+    await _context.SaveChangesAsync();
+    return true;
+}
 
         public async Task<bool> AddExamTimeTableAsync(ExamTimeTableDto dto)
         {
@@ -110,6 +114,63 @@ namespace backend.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> AllocateTimeTable(ExamTimeTableDto dto)
+        {
+            // 1️⃣ Check if staff exists
+            var staffExists = await _context.StaffModel.AnyAsync(s => s.StaffId == dto.StaffId);
+            if (!staffExists)
+            {
+                throw new InvalidOperationException("Staff not found.");
+            }
+
+            // 2️⃣ Check if an exam already exists for the same specs
+            var examExists = await _context.ExamTimeTable.AnyAsync(e =>
+                e.ExamDate.Date == dto.ExamDate.Date && // same date
+                e.Semester == dto.Semester &&
+                e.DepartmentName == dto.DepartmentName &&
+                e.BranchName == dto.BranchName &&
+                e.ClassName == dto.ClassName &&
+                e.SubjectCode == dto.SubjectCode // optional: include SubjectCode if needed
+            );
+
+            if (examExists)
+            {
+                throw new InvalidOperationException("This exam timetable already exists for the specified session, semester, department, branch, class, and subject.");
+            }
+
+            // 3️⃣ Create new entry
+            var newEntry = new ExamTimeTableModel
+            {
+                StaffId = dto.StaffId,
+                Session = dto.Session,
+                Semester = dto.Semester,
+                SubjectCode = dto.SubjectCode,
+                SubjectName = dto.SubjectName,
+                DepartmentName = dto.DepartmentName,
+                ClassName = dto.ClassName,
+                BranchName = dto.BranchName,
+                Year = dto.Year,
+                ExamDate = dto.ExamDate,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _context.ExamTimeTable.Add(newEntry);
+            var result = await _context.SaveChangesAsync();
+
+            return result > 0;
+        }
+
+
+        public async Task<List<ExamTimeTableModel>> GetAllExamTimeTableAllocations()
+        {
+            return await _context.ExamTimeTable.ToListAsync();
+        }
+
+        public async Task<List<ExamTimeTableModel>> GetAllExamTimeTableAllocationsByStaffId()
+        {
+            return await _context.ExamTimeTable.ToListAsync();
+        }
+
         private string GenerateRandomPassword(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -167,5 +228,32 @@ namespace backend.Services
 
             await smtp.SendMailAsync(message);
         }
+
+        private async Task CreateDefaultTimeTableForStaffAsync(int staffId)
+{
+    // Define your working days and number of periods per day
+    var days = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+    int totalPeriodsPerDay = 7; // or 8, depending on your system
+
+    var timetableEntries = new List<StaffTimeTableModel>();
+
+    foreach (var day in days)
+    {
+        for (int period = 1; period <= totalPeriodsPerDay; period++)
+        {
+            timetableEntries.Add(new StaffTimeTableModel
+            {
+                StaffId = staffId,
+                Day = day,
+                Period = period,
+                SubjectName = null! // intentionally left null, will be filled later
+            });
+        }
+    }
+
+    _context.StaffTimeTable.AddRange(timetableEntries);
+    await _context.SaveChangesAsync();
+}
+
     }
 }

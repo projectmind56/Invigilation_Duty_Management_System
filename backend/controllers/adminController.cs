@@ -77,5 +77,35 @@ namespace backend.Controllers
             return Ok();
         }
 
+        [HttpPost("addExamTimeTableAllocation")]
+        public async Task<IActionResult> AllocateTimeTable([FromBody] ExamTimeTableDto dto)
+        {
+            try
+            {
+                var result = await _adminInterface.AllocateTimeTable(dto);
+                if (result)
+                    return Ok(new { message = "Exam allocated added successfully." });
+
+                return BadRequest(new { message = "Failed to allocate timetable." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Custom error for duplicate subject code
+                return Conflict(new { message = ex.Message }); // 409 Conflict
+            }
+            catch (Exception ex)
+            {
+                // General server error
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
+        }
+        [HttpGet("allExamTimeTableAllocations")]
+        public async Task<IActionResult> GetAllExamTimeTableAllocations()
+        {
+            var list = await _adminInterface.GetAllExamTimeTableAllocations();
+            return Ok(list);
+        }
+
+
     }
 }

@@ -12,6 +12,7 @@ namespace backend.Interfaces
         Task<bool> DeleteExamTimeTableAsync(int id);
         Task UpdateExamTimeTableAsync(int id, ExamTimeTableModel model);
 
-
+        Task<bool> AllocateTimeTable(ExamTimeTableDto dto);
+        Task<List<ExamTimeTableModel>> GetAllExamTimeTableAllocations();
     }
 }

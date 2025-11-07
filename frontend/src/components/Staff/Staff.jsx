@@ -1,35 +1,28 @@
-import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-function Admin() {
+import React from 'react'
+
+function Staff() {
     return (
         <div className="container-fluid mt-4">
-            <h2 className="mb-4 text-primary">Admin Dashboard</h2>
+            <h2 className="mb-4 text-primary">Staff Dashboard</h2>
 
             {/* Bootstrap Nav */}
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                     <NavLink
-                        to="/admin/accept-staff"
+                        to="/staff/accept-hall-arrangement"
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
-                        Accept Staff
+                        Accept Hall Allocations
                     </NavLink>
                 </li>
-                {/* <li className="nav-item">
+                <li className="nav-item">
                     <NavLink
-                        to="/admin/add-time-table"
+                        to="/staff/add-time-table"
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
                         Add Time Table
-                    </NavLink>
-                </li> */}
-                <li className="nav-item">
-                    <NavLink
-                        to="/admin/allocate-time-table"
-                        className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
-                    >
-                        Allocate Time Table
                     </NavLink>
                 </li>
             </ul>
@@ -40,4 +33,4 @@ function Admin() {
     );
 }
 
-export default Admin;
+export default Staff

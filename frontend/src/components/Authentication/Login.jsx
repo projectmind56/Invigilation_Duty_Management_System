@@ -44,14 +44,14 @@ function Login() {
 
         const decodedToken = jwtDecode(token);
         const userRole = decodedToken.role;
-
+        
         toast.success('Login successful!');
 
         setTimeout(() => {
           if (userRole === 'admin') {
             navigate('/admin');
           } else if (userRole === 'staff') {
-            navigate('/home');
+            navigate('/staff');
           } else {
             navigate('/');
           }

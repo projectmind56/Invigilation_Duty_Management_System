@@ -7,9 +7,11 @@ namespace backend.Models
     {
         [Key]
         public int Id { get; set; }
+        [Required]
+        public int StaffId { get; set; }
 
         [Required]
-        public string Session { get; set; } = string.Empty; 
+        public string Session { get; set; } = string.Empty;
 
         [Required]
         public int Semester { get; set; }
@@ -22,12 +24,16 @@ namespace backend.Models
 
         [Required]
         public string DepartmentName { get; set; } = string.Empty;
+        [Required]
+        public string ClassName { get; set; } = string.Empty;
 
         [Required]
         public string BranchName { get; set; } = string.Empty;
 
         [Required]
         public int Year { get; set; }
+        [Required]
+        public string Status { get; set; } = "pending";
 
         [Required]
         public DateTime ExamDate { get; set; }
