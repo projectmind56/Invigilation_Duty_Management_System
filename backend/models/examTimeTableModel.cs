@@ -10,6 +10,8 @@ namespace backend.Models
         [Required]
         public int StaffId { get; set; }
 
+        public int? ReallocatedStaffId { get; set; }
+
         [Required]
         public string Session { get; set; } = string.Empty;
 
