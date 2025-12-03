@@ -15,6 +15,7 @@ import ExamTimeTableAllocation from './components/Admin/ExamTimeTableAllocation'
 import AcceptHallAllocation from './components/Staff/AcceptHallAllocation';
 import ProtectedRoute from './ProtectedRoute';
 import AcceptHallReAllocation from './components/Staff/AcceptHallReAllocation';
+import AddTimeTableViaExcel from './components/Admin/AddTimeTableViaExcel';
 
 // Utility: decode JWT safely
 function decodeToken(token) {
@@ -44,6 +45,7 @@ function App() {
             <Route path="accept-staff" element={<AcceptStaff />} />
             <Route path="add-time-table" element={<AddExamTimeTable />} />
             <Route path="allocate-time-table" element={<ExamTimeTableAllocation />} />
+            <Route path="allocate-time-table-via-excel" element={<AddTimeTableViaExcel />} />
           </Route>
         </Route>
 

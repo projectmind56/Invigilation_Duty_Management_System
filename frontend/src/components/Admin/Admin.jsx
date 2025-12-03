@@ -47,6 +47,14 @@ function Admin() {
                         Allocate Time Table
                     </NavLink>
                 </li>
+                <li className="nav-item">
+                    <NavLink
+                        to="/admin/allocate-time-table-via-excel"
+                        className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
+                    >
+                        Allocate Time Table Via Excel
+                    </NavLink>
+                </li>
             </ul>
 
             {/* Page content will load here */}
