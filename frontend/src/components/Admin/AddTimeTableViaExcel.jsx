@@ -131,7 +131,7 @@ function AddTimeTableViaExcel() {
     };
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid mt-4">
             <ToastContainer />
 
             <h4 className="text-primary mb-3">Upload Exam Timetable (Excel)</h4>

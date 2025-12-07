@@ -26,50 +26,43 @@ namespace backend.Services
                 .ToListAsync();
         }
 
-public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
-{
-    var staff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == dto.StaffId);
-    if (staff == null) return false;
+        public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
+        {
+            var staff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == dto.StaffId);
+            if (staff == null) return false;
 
-    if (dto.Status == "Accept")
-    {
-        var password = GenerateRandomPassword(6);
-        staff.Password = password;
-        staff.ApprovalStatus = "Accept";
+            if (dto.Status == "Accept")
+            {
+                var password = GenerateRandomPassword(6);
+                staff.Password = password;
+                staff.ApprovalStatus = "Accept";
 
-        await SendAcceptanceEmailAsync(staff.Email, password);
+                await SendAcceptanceEmailAsync(staff.Email, password);
 
-        // 🟢 CREATE BLANK TIMETABLE FOR THIS STAFF
-        await CreateDefaultTimeTableForStaffAsync(staff.StaffId);
-    }
-    else if (dto.Status == "Reject")
-    {
-        staff.ApprovalStatus = "Reject";
-        await SendRejectionEmailAsync(staff.Email, dto.RejectionReason ?? "Not specified");
-    }
+                // 🟢 CREATE BLANK TIMETABLE FOR THIS STAFF
+                await CreateDefaultTimeTableForStaffAsync(staff.StaffId);
+            }
+            else if (dto.Status == "Reject")
+            {
+                staff.ApprovalStatus = "Reject";
+                await SendRejectionEmailAsync(staff.Email, dto.RejectionReason ?? "Not specified");
+            }
 
-    await _context.SaveChangesAsync();
-    return true;
-}
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
         public async Task<bool> AddExamTimeTableAsync(ExamTimeTableDto dto)
         {
-            // Check if subject code already exists
-            var exists = await _context.ExamTimeTable
-                .AnyAsync(e => e.SubjectCode == dto.SubjectCode);
-
-            if (exists)
-            {
-                throw new InvalidOperationException("An entry with this subject code already exists.");
-            }
-
             var newEntry = new ExamTimeTableModel
             {
+                StaffId = dto.StaffId,
                 Session = dto.Session,
                 Semester = dto.Semester,
                 SubjectCode = dto.SubjectCode,
                 SubjectName = dto.SubjectName,
                 DepartmentName = dto.DepartmentName,
+                ClassName = dto.ClassName,
                 BranchName = dto.BranchName,
                 Year = dto.Year,
                 ExamDate = dto.ExamDate,
@@ -78,6 +71,17 @@ public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
 
             _context.ExamTimeTable.Add(newEntry);
             var result = await _context.SaveChangesAsync();
+
+            if (result > 0)
+            {
+                // Fetch staff email
+                var staff = await _context.StaffModel.FindAsync(dto.StaffId);
+                if (staff != null)
+                {
+                    await SendExamDetailsEmailAsync(staff, newEntry);
+                }
+            }
+
             return result > 0;
         }
 
@@ -116,29 +120,22 @@ public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
 
         public async Task<bool> AllocateTimeTable(ExamTimeTableDto dto)
         {
-            // 1️⃣ Check if staff exists
-            var staffExists = await _context.StaffModel.AnyAsync(s => s.StaffId == dto.StaffId);
-            if (!staffExists)
-            {
+            var staff = await _context.StaffModel.FindAsync(dto.StaffId);
+            if (staff == null)
                 throw new InvalidOperationException("Staff not found.");
-            }
 
-            // 2️⃣ Check if an exam already exists for the same specs
             var examExists = await _context.ExamTimeTable.AnyAsync(e =>
-                e.ExamDate.Date == dto.ExamDate.Date && // same date
+                e.ExamDate.Date == dto.ExamDate.Date &&
                 e.Semester == dto.Semester &&
                 e.DepartmentName == dto.DepartmentName &&
                 e.BranchName == dto.BranchName &&
                 e.ClassName == dto.ClassName &&
-                e.SubjectCode == dto.SubjectCode // optional: include SubjectCode if needed
+                e.SubjectCode == dto.SubjectCode
             );
 
             if (examExists)
-            {
                 throw new InvalidOperationException("This exam timetable already exists for the specified session, semester, department, branch, class, and subject.");
-            }
 
-            // 3️⃣ Create new entry
             var newEntry = new ExamTimeTableModel
             {
                 StaffId = dto.StaffId,
@@ -156,6 +153,11 @@ public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
 
             _context.ExamTimeTable.Add(newEntry);
             var result = await _context.SaveChangesAsync();
+
+            if (result > 0)
+            {
+                await SendExamDetailsEmailAsync(staff, newEntry);
+            }
 
             return result > 0;
         }
@@ -229,31 +231,56 @@ public async Task<bool> ApproveOrRejectStaffAsync(StaffApprovalDto dto)
             await smtp.SendMailAsync(message);
         }
 
-        private async Task CreateDefaultTimeTableForStaffAsync(int staffId)
-{
-    // Define your working days and number of periods per day
-    var days = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-    int totalPeriodsPerDay = 7; // or 8, depending on your system
-
-    var timetableEntries = new List<StaffTimeTableModel>();
-
-    foreach (var day in days)
-    {
-        for (int period = 1; period <= totalPeriodsPerDay; period++)
+        private async Task SendExamDetailsEmailAsync(StaffModel staff, ExamTimeTableModel exam)
         {
-            timetableEntries.Add(new StaffTimeTableModel
-            {
-                StaffId = staffId,
-                Day = day,
-                Period = period,
-                SubjectName = null! // intentionally left null, will be filled later
-            });
-        }
-    }
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "templates", "ExamDetails.html");
 
-    _context.StaffTimeTable.AddRange(timetableEntries);
-    await _context.SaveChangesAsync();
-}
+            if (!System.IO.File.Exists(templatePath))
+                throw new FileNotFoundException("Exam details email template not found.");
+
+            string html = await System.IO.File.ReadAllTextAsync(templatePath);
+
+            // Replace placeholders with actual exam details
+            html = html.Replace("{{StaffName}}", staff.Email ?? "Staff")
+                       .Replace("{{SubjectName}}", exam.SubjectName)
+                       .Replace("{{SubjectCode}}", exam.SubjectCode)
+                       .Replace("{{DepartmentName}}", exam.DepartmentName)
+                       .Replace("{{ClassName}}", exam.ClassName)
+                       .Replace("{{BranchName}}", exam.BranchName)
+                       .Replace("{{Session}}", exam.Session)
+                       .Replace("{{Semester}}", exam.Semester.ToString())
+                       .Replace("{{Year}}", exam.Year.ToString())
+                       .Replace("{{ExamDate}}", exam.ExamDate.ToString("yyyy-MM-dd"));
+
+            await SendEmailAsync(staff.Email!, "Exam Timetable Details", html);
+        }
+
+
+        private async Task CreateDefaultTimeTableForStaffAsync(int staffId)
+        {
+            // Define your working days and number of periods per day
+            var days = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+            int totalPeriodsPerDay = 7; // or 8, depending on your system
+
+            var timetableEntries = new List<StaffTimeTableModel>();
+
+            foreach (var day in days)
+            {
+                for (int period = 1; period <= totalPeriodsPerDay; period++)
+                {
+                    timetableEntries.Add(new StaffTimeTableModel
+                    {
+                        StaffId = staffId,
+                        Day = day,
+                        Period = period,
+                        SubjectName = null! // intentionally left null, will be filled later
+                    });
+                }
+            }
+
+            _context.StaffTimeTable.AddRange(timetableEntries);
+            await _context.SaveChangesAsync();
+        }
 
     }
 }

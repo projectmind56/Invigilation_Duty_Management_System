@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Reallocation Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f8f8;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 10px;
+        }
+        .content {
+            margin-top: 10px;
+        }
+        .details {
+            margin-top: 15px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .details td, .details th {
+            border: 1px solid #dddddd;
+            padding: 8px;
+        }
+        .details th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">New Exam Reallocation Request</div>
+        <div class="content">
+            <p>Dear Staff,</p>
+            <p>You have a new exam reallocation request from <strong>{{FromStaffEmail}}</strong>.</p>
+            <p>Please review the exam details below:</p>
+
+            <table class="details">
+                <tr>
+                    <th>Session</th>
+                    <td>{{Session}}</td>
+                </tr>
+                <tr>
+                    <th>Semester</th>
+                    <td>{{Semester}}</td>
+                </tr>
+                <tr>
+                    <th>Subject Code</th>
+                    <td>{{SubjectCode}}</td>
+                </tr>
+                <tr>
+                    <th>Subject Name</th>
+                    <td>{{SubjectName}}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{Department}}</td>
+                </tr>
+                <tr>
+                    <th>Class</th>
+                    <td>{{ClassName}}</td>
+                </tr>
+                <tr>
+                    <th>Branch</th>
+                    <td>{{Branch}}</td>
+                </tr>
+                <tr>
+                    <th>Year</th>
+                    <td>{{Year}}</td>
+                </tr>
+                <tr>
+                    <th>Exam Date</th>
+                    <td>{{ExamDate}}</td>
+                </tr>
+            </table>
+
+            <p>Please take the necessary action at your earliest convenience.</p>
+
+            <div class="footer">
+                This is an automated email. Please do not reply directly to this email.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

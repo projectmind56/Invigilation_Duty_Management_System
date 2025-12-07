@@ -33,7 +33,7 @@ function AcceptHallAllocation() {
 
     const decoded = decodeToken(token);
     const staffId = decoded?.nameid;
-    
+
     setCurrentStaffId(staffId);
 
     if (!staffId) {
@@ -93,9 +93,9 @@ function AcceptHallAllocation() {
       const data = await res.json();
 
       // Remove current staff from the list
-      
-      const filtered = data.filter((s) => s.staffId !==  Number(currentStaffId));
-      
+
+      const filtered = data.filter((s) => s.staffId !== Number(currentStaffId));
+
       setAvailableStaff(filtered);
       setSelectedStaffIds([]);
       setShowStaffModal(true);
@@ -123,6 +123,9 @@ function AcceptHallAllocation() {
       fromStaffId: parseInt(currentStaffId),
       toStaffIds: [staffId], // single staff for Send button
     };
+
+    console.log(requestBody);
+
 
     try {
       const res = await fetch(
@@ -329,10 +332,13 @@ function AcceptHallAllocation() {
                 {selectedStaffIds.length > 0 && (
                   <button
                     className="btn btn-primary"
-                    onClick={handleRequestReallocation}
+                    onClick={() => {
+                      selectedStaffIds.forEach(staffId => handleRequestReallocation(staffId));
+                    }}
                   >
                     Request Reallocation
                   </button>
+
                 )}
               </div>
             </div>
