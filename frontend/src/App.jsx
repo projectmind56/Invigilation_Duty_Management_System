@@ -16,6 +16,7 @@ import AcceptHallAllocation from './components/Staff/AcceptHallAllocation';
 import ProtectedRoute from './ProtectedRoute';
 import AcceptHallReAllocation from './components/Staff/AcceptHallReAllocation';
 import AddTimeTableViaExcel from './components/Admin/AddTimeTableViaExcel';
+import ForgotPassword from './components/Staff/ForgotPassword';
 
 // Utility: decode JWT safely
 function decodeToken(token) {
@@ -56,6 +57,7 @@ function App() {
             <Route path="accept-hall-arrangement" element={<AcceptHallAllocation />} />
             <Route path="accept-hall-re-arrangement" element={<AcceptHallReAllocation />} />
             <Route path="add-time-table" element={<AddTimeTable />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
           </Route>
         </Route>
 

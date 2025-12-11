@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using backend.Dtos;
 using backend.DTOs;
+using backend.DTO;
 
 namespace backend.Controllers
 {
@@ -141,6 +142,19 @@ public async Task<IActionResult> RejectReallocation([FromBody] ReallocationActio
     return Ok(new { message = "Reallocation request rejected." });
 }
 
+[HttpPost("updatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.NewPassword))
+                return BadRequest(new { message = "Invalid request" });
+
+            var result = await _staffInterfaces.UpdatePasswordAsync(request);
+
+            if (!result)
+                return BadRequest(new { message = "Unable to update password" });
+
+            return Ok(new { message = "Password updated successfully" });
+        }
 
 
     }

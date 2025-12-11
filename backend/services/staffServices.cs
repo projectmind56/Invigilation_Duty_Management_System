@@ -12,6 +12,7 @@ using System.Text;
 using backend.Dtos;
 using YourNamespace.Models;
 using backend.DTOs;
+using backend.DTO;
 
 namespace backend.Services
 {
@@ -256,12 +257,25 @@ namespace backend.Services
 
             if (!newRequests.Any())
             {
-                // All staff already have requests
                 return (false, $"Request already sent for staff ID(s): {string.Join(", ", existingRequests)}");
             }
 
             await _context.ReallocationRequests.AddRangeAsync(newRequests);
             await _context.SaveChangesAsync();
+
+            // Fetch exam details
+            var exam = await _context.ExamTimeTable.FirstOrDefaultAsync(e => e.Id == examId);
+            if (exam != null)
+            {
+                foreach (var toStaffId in newRequests.Select(r => r.ToStaffId))
+                {
+                    var staff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == toStaffId);
+                    if (staff != null && !string.IsNullOrEmpty(staff.Email))
+                    {
+                        await SendReallocationRequestEmailAsync(staff.Email, exam, fromStaffId);
+                    }
+                }
+            }
 
             string message = "Reallocation request sent successfully.";
             if (existingRequests.Any())
@@ -270,6 +284,52 @@ namespace backend.Services
             }
 
             return (true, message);
+        }
+
+        // New method to send reallocation email
+        private async Task SendReallocationRequestEmailAsync(string toEmail, ExamTimeTableModel exam, int fromStaffId)
+        {
+            var fromStaff = await _context.StaffModel.FirstOrDefaultAsync(s => s.StaffId == fromStaffId);
+            if (fromStaff == null) return;
+
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "templates", "ReallocationRequest.html");
+
+            if (!System.IO.File.Exists(templatePath))
+                return;
+
+            string emailHtml = await System.IO.File.ReadAllTextAsync(templatePath);
+            emailHtml = emailHtml.Replace("{{ToEmail}}", toEmail)
+                                 .Replace("{{FromStaffEmail}}", fromStaff.Email ?? "N/A")
+                                 .Replace("{{Session}}", exam.Session)
+                                 .Replace("{{Semester}}", exam.Semester.ToString())
+                                 .Replace("{{SubjectCode}}", exam.SubjectCode)
+                                 .Replace("{{SubjectName}}", exam.SubjectName)
+                                 .Replace("{{Department}}", exam.DepartmentName)
+                                 .Replace("{{ClassName}}", exam.ClassName)
+                                 .Replace("{{Branch}}", exam.BranchName)
+                                 .Replace("{{Year}}", exam.Year.ToString())
+                                 .Replace("{{ExamDate}}", exam.ExamDate.ToString("yyyy-MM-dd"));
+
+            var message = new MailMessage
+            {
+                From = new MailAddress("no-reply@yourdomain.com"), // change
+                Subject = "New Exam Reallocation Request",
+                Body = emailHtml,
+                IsBodyHtml = true
+            };
+            message.To.Add(new MailAddress(toEmail));
+
+            using var smtp = new SmtpClient
+            {
+                Host = _configuration["Smtp:Host"],
+                Port = int.Parse(_configuration["Smtp:Port"] ?? "587"),
+                EnableSsl = true,
+                Credentials = new NetworkCredential(
+                    _configuration["Smtp:Username"],
+                    _configuration["Smtp:Password"])
+            };
+
+            await smtp.SendMailAsync(message);
         }
 
         public async Task<List<ReallocationRequest>> GetAllRequestsAsync()
@@ -337,6 +397,26 @@ namespace backend.Services
 
             return responseList;
         }
+
+        public async Task<bool> UpdatePasswordAsync(UpdatePasswordRequest request)
+        {
+            if (request == null || string.IsNullOrEmpty(request.UserId))
+                return false;
+
+            var user = await _context.StaffModel
+                .FirstOrDefaultAsync(u => u.StaffId.ToString() == request.UserId);
+
+            if (user == null)
+                return false;
+
+            // 🔐 Hash password using simple hash (use Identity for stronger hashing)
+            user.Password = request.NewPassword;
+
+            _context.StaffModel.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> AcceptReallocationRequestAsync(int requestId)
         {
             var request = await _context.ReallocationRequests.FirstOrDefaultAsync(r => r.Id == requestId);

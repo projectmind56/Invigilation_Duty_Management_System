@@ -1,4 +1,5 @@
 using backend.Dto;
+using backend.DTO;
 using backend.Dtos;
 using backend.DTOs;
 using backend.Models;
@@ -35,5 +36,7 @@ namespace backend.Interfaces
         Task<List<ReallocationRequestResponseDto>> GetReallocationRequestsForStaffAsync(int toStaffId);
     Task<bool> AcceptReallocationRequestAsync(int requestId);
     Task<bool> RejectReallocationRequestAsync(int requestId);
+
+    Task<bool> UpdatePasswordAsync(UpdatePasswordRequest request);
     }
 }

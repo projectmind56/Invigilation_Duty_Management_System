@@ -55,6 +55,14 @@ function Staff() {
                         Accept Hall Re Allocations
                     </NavLink>
                 </li>
+                <li className="nav-item">
+                    <NavLink
+                        to="/staff/forgot-password"
+                        className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
+                    >
+                        Forgot Password
+                    </NavLink>
+                </li>
             </ul>
 
             {/* Page content */}

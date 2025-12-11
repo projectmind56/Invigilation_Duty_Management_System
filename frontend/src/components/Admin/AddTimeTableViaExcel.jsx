@@ -19,8 +19,12 @@ const REQUIRED_HEADERS = [
     "className"
 ];
 
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+
+
 function AddTimeTableViaExcel() {
     const [excelData, setExcelData] = useState([]);
+    const navigate = useNavigate();
 
     // Convert Excel serial date → yyyy-mm-dd
     const formatExcelDate = (value) => {
@@ -86,6 +90,7 @@ function AddTimeTableViaExcel() {
 
             setExcelData(sheet);
             toast.success("Excel validated successfully!");
+            
         };
 
         reader.readAsBinaryString(file);
@@ -117,6 +122,8 @@ function AddTimeTableViaExcel() {
 
             toast.success("All rows uploaded successfully!");
             setExcelData([]);
+            navigate('/admin/allocate-time-table');
+
 
         } catch (err) {
             console.error(err);
